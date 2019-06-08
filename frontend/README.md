@@ -1,8 +1,9 @@
-# static-code-analyzer
+## Static Code Analyzer frontend
 
-> Static Code Analyzer frontend
+### Build Setup
 
-## Build Setup
+Make sure you are in the `frontend/` directory before executing the following
+commands:
 
 ``` bash
 # install dependencies
@@ -18,4 +19,6 @@ npm run build
 npm run build --report
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+For a detailed explanation on how things work, check out the
+[guide](http://vuejs-templates.github.io/webpack/) and [docs for
+vue-loader](http://vuejs.github.io/vue-loader).
