@@ -24,21 +24,24 @@ def analyze(request):
         if request.POST['by'] == 'upload':
             fp.write(f.read())
         else:
-            fp.write(request.POST['text'])
+            fp.write(request.POST['text'].encode())
         fp.flush()
         if language in commands.keys():
             cmd = commands[language] + " " + fp.name
         else:
             cmd = "echo 'Language not supported'"
-        # import pdb; pdb.set_trace()
         (output, error) = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True
         ).communicate()
+        try:
+            friendly_name = f.name
+        except NameError:
+            friendly_name = "test." + language
         (output, error) = (
-            output.decode().replace(fp.name, f.name),
-            error.decode().replace(fp.name, f.name)
+            output.decode().replace(fp.name, friendly_name),
+            error.decode().replace(fp.name, friendly_name)
         )
     return JsonResponse({ "output": output, "error": error })
