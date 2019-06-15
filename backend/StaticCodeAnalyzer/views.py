@@ -80,9 +80,12 @@ def analyze(request):
     language = request.POST['language']
     with tempfile.NamedTemporaryFile(suffix="."+language) as fp:
         if request.POST['by'] == 'upload':
-            fp.write(f.read())
+            text = f.read()
+            friendly_name = f.name
         else:
-            fp.write(request.POST['text'].encode())
+            text = request.POST['text'].encode()
+            friendly_name = "test." + language
+        fp.write(text)
         fp.flush()
         if language in commands.keys():
             cmd = commands[language] + " " + fp.name
@@ -94,14 +97,11 @@ def analyze(request):
             stderr=subprocess.PIPE,
             shell=True
         ).communicate()
-        try:
-            friendly_name = f.name
-        except NameError:
-            friendly_name = "test." + language
         output = output.decode() + "\n" + error.decode()
-        output.replace(fp.name, friendly_name)
+        output = output.replace(fp.name, friendly_name)
     return JsonResponse({
         "output": output,
         "errors": list(getErrors[language](output)),
-        "file": friendly_name
+        "file": friendly_name,
+        "text": text.decode()
     })

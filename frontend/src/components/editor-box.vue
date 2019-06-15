@@ -9,6 +9,7 @@
       <div class="codemirror">
         <codemirror v-model="text"
           :options="cmOption"
+          @change="errors.splice(0, errors.length)"
           @ready="onCmReady">
         </codemirror>
       </div>
@@ -107,6 +108,11 @@ export default {
     },
     text: function (newcode, oldcode) {
       this.$emit('update:code', newcode)
+    },
+    code: function (newcode, oldcode) {
+      if (this.text !== newcode) {
+        this.text = newcode
+      }
     }
   },
   warnings: function (newwarnings, oldwarnings) {

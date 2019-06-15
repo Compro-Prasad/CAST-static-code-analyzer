@@ -1,42 +1,36 @@
 <template>
-  <div class="container">
-    <div class="large-12 medium-12 small-12 cell">
-      <div class="inline-block">
-        <input type="radio" v-model="by" value="Upload" checked>Upload<br>
+  <div class="row flex-middle">
+    <at-card class="col-20 col-offset-2">
+      <div class="row flex-center">
+        <at-radio-group v-model="by">
+          <at-radio-button label="Upload" checked>Upload</at-radio-button>
+          <at-radio-button label="Text">Text</at-radio-button>
+        </at-radio-group>
       </div>
-      <div class="inline-block">
-        <input type="radio" v-model="by" value="Text">Text<br>
-      </div>
-      <div>
-        <div>
-          <label>Language
-            <at-select clearable size="large" v-model="language">
-              <at-option value="cpp">C++</at-option>
-              <at-option value="js">JavaScript</at-option>
-              <at-option value="py">Python</at-option>
-            </at-select>
-          </label>
+      <div style="margin: 10px">
+        <div class="row flex-center">
+          <label class="col-6">Language</label>
+          <at-select :disabled="disableSubmit"
+            class="col-6" size="large" v-model="language">
+            <at-option value="cpp">C++</at-option>
+            <at-option value="js">JavaScript</at-option>
+            <at-option value="py">Python</at-option>
+          </at-select>
         </div>
         <div>
-          <label v-show="by=='Text'">Text
-            <editor-box :language="language" :code.sync="text" :errors="fileErrors" />
-          </label>
-          <label v-show="by=='Upload'">File(Size limit is 100,000 bytes)
-            <input type="file" id="file" ref="file" v-on:change="handleFileUpload()"/>
-          </label>
+          <editor-box v-show="by=='Text'" :language="language" :code.sync="text" :errors.sync="fileErrors" />
+          <input :disabled="disableSubmit"
+            v-show="by=='Upload'" type="file" id="file" ref="file" v-on:change="handleFileUpload()" />
         </div>
       </div>
       <div>
         <at-button :disabled="disableSubmit || file == '' && text == ''" v-on:click="submitFile()">Submit</at-button>
       </div>
-      <div style="color: #faa">
-        {{ error }}
-      </div>
       <hr>
       <div v-show="output != ''">
         Results: <pre>{{ output }}</pre>
       </div>
-    </div>
+    </at-card>
   </div>
 </template>
 
@@ -52,7 +46,6 @@ export default {
       fileName: '',
       fileErrors: [],
       language: 'py',
-      error: '',
       output: '',
       by: 'Upload',
       text: '',
@@ -64,9 +57,11 @@ export default {
       this.file = this.$refs.file.files[0]
       if (this.file.size > 100000 || !this.file.type.match(/^text\//) || this.file.type === '') {
         this.file = ''
-        this.error = 'Invalid file or it has an invalid type'
+        this.$Notify.error({
+          'message': 'Size limit is 100,000 bytes or invalid file type',
+          'duration': 0
+        })
       } else {
-        this.error = ''
       }
     },
     submitFile () {
@@ -80,32 +75,36 @@ export default {
       }
       formData.set('by', this.by.toLowerCase())
       formData.set('language', this.language)
-      this.error = 'Processing'
       this.disableSubmit = true
+      this.$Notify.info({ message: 'Processing', duration: 20000 })
       this.output = ''
       axios.post('http://localhost:8000/analyze/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       }).then(response => {
-        this.error = ''
-        this.disableSubmit = false
+        if (this.by === 'Upload') {
+          this.text = response.data.text
+        }
         this.output = response.data.output
         this.fileErrors = response.data.errors
         this.fileName = response.data.file
-        if (this.output.length === 1) {
-          this.output = 'There was no output'
+        this.by = 'Text'
+        if (this.output.length === 1 && this.fileErrors.length === 0) {
+          this.$Notify.info({ message: 'No output recieved', duration: 20000 })
+        } else {
+          this.$Notify.info({ message: 'Got some output', duration: 20000 })
         }
-      }).catch(() => {
-        this.error = ''
         this.disableSubmit = false
-        this.output = 'Server Error'
+      }).catch(() => {
+        this.$Notify.error({ message: 'Server error', duration: 20 })
+        this.disableSubmit = false
       })
     }
   },
   watch: {
-    text: function () {
-      if (this.fileErrors.length !== 0) {
+    language: function () {
+      if (this.disableSubmit && this.fileErrors.length !== 0) {
         this.fileErrors.splice(0, this.fileErrors.length)
       }
     }
