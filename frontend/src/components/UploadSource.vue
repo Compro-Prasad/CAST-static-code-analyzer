@@ -10,16 +10,16 @@
       <div>
         <div>
           <label>Language
-            <select v-model="language">
-              <option value="cpp">C++</option>
-              <option value="js">JavaScript</option>
-              <option value="py">Python</option>
-            </select>
+            <at-select clearable size="large" v-model="language">
+              <at-option value="cpp">C++</at-option>
+              <at-option value="js">JavaScript</at-option>
+              <at-option value="py">Python</at-option>
+            </at-select>
           </label>
         </div>
         <div>
           <label v-show="by=='Text'">Text
-            <textarea v-model="text" style="width: 500px; height: 500px;"></textarea>
+            <editor-box :language="language" :code.sync="text" :errors="fileErrors" />
           </label>
           <label v-show="by=='Upload'">File(Size limit is 100,000 bytes)
             <input type="file" id="file" ref="file" v-on:change="handleFileUpload()"/>
@@ -27,7 +27,7 @@
         </div>
       </div>
       <div>
-        <button :disabled="disableSubmit || file == '' && text == ''" v-on:click="submitFile()">Submit</button>
+        <at-button :disabled="disableSubmit || file == '' && text == ''" v-on:click="submitFile()">Submit</at-button>
       </div>
       <div style="color: #faa">
         {{ error }}
@@ -42,12 +42,15 @@
 
 <script>
 import axios from 'axios'
+import EditorBox from '@/components/editor-box'
 
 export default {
   name: 'UploadSource',
   data () {
     return {
       file: '',
+      fileName: '',
+      fileErrors: [],
       language: 'py',
       error: '',
       output: '',
@@ -87,7 +90,9 @@ export default {
       }).then(response => {
         this.error = ''
         this.disableSubmit = false
-        this.output = response.data.output + '\n' + response.data.error
+        this.output = response.data.output
+        this.fileErrors = response.data.errors
+        this.fileName = response.data.file
         if (this.output.length === 1) {
           this.output = 'There was no output'
         }
@@ -97,12 +102,22 @@ export default {
         this.output = 'Server Error'
       })
     }
+  },
+  watch: {
+    text: function () {
+      if (this.fileErrors.length !== 0) {
+        this.fileErrors.splice(0, this.fileErrors.length)
+      }
+    }
+  },
+  components: {
+    EditorBox
   }
 }
 </script>
 
 <style>
-  .inline-block {
-    display: inline-block;
-  }
+.inline-block {
+  display: inline-block;
+}
 </style>
