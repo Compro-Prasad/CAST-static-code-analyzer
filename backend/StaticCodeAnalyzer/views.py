@@ -7,7 +7,7 @@ import re
 # This can be included in database to be directly edited in django admin
 commands = {
     "py": "pylint",
-    "cpp": "clang -Wall",
+    "cpp": "clang++ -Wall",
     "js": "eslint"
 }
 

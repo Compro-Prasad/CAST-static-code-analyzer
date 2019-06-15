@@ -9,7 +9,7 @@ commands.
 cp .env.example .env
 ```
 
-Fill in the MySQL db details in `.env`.
+Fill in the MySQL db details in `.env` file.
 
 Make sure you have `pipenv` installed on your system. Else you can also make
 your own virtualenv.

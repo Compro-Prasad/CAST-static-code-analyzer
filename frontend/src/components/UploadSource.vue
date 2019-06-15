@@ -47,7 +47,7 @@ export default {
       fileErrors: [],
       language: 'py',
       output: '',
-      by: 'Upload',
+      by: 'Text',
       text: '',
       disableSubmit: false
     }
