@@ -56,11 +56,6 @@ export default {
       required: false,
       default () { return [] },
       type: Array
-    },
-    warnings: {
-      required: false,
-      default () { return [] },
-      type: Array
     }
   },
   data () {
@@ -74,6 +69,7 @@ export default {
       cm: {},
       cm_doc: {},
       line_errors: [],
+      updateErrors: false,
       text: this.code,
       cmOption: {
         tabSize: 4,
@@ -88,48 +84,27 @@ export default {
     }
   },
   watch: {
-    language: function (newlang, oldlang) {
+    language (newlang, oldlang) {
       this.cmOption.mode = this.modes[newlang]
     },
-    errors: function (newerrors, olderrors) {
-      for (let error of this.line_errors) {
-        this.cm_doc.removeLineClass(error['handle'], 'background', 'error-class')
-        error['widget'].clear()
-      }
-      this.line_errors.splice(0, this.line_errors.length)
-      for (let error of newerrors) {
-        if (this.cm_doc.lineInfo(error['line'])) {
-          this.line_errors.push({
-            'handle': this.cm_doc.addLineClass(error['line'], 'background', 'error-class'),
-            'widget': this.cm_doc.addLineWidget(error['line'], this.newError(error['text']))
-          })
-        }
+    errors (newerrors, olderrors) {
+      if (newerrors !== olderrors) {
+        this.updateErrors = true
       }
     },
-    text: function (newcode, oldcode) {
+    text (newcode, oldcode) {
+      console.log('text', this.errors)
       this.$emit('update:code', newcode)
+      if (!this.updateErrors) {
+        return
+      }
+      this.cmUnsetErrors()
+      setTimeout(this.cmSetErrors, 2000)
     },
-    code: function (newcode, oldcode) {
+    code (newcode, oldcode) {
+      console.log('code', this.text)
       if (this.text !== newcode) {
         this.text = newcode
-      }
-    }
-  },
-  warnings: function (newwarnings, oldwarnings) {
-    for (let warning of oldwarnings) {
-      this.cm_doc.removeLineClass(warning['line'], 'background', 'warning-class')
-    }
-    for (let lineWidgetWarn of this.line_widget_warns) {
-      lineWidgetWarn.clear()
-    }
-    this.line_widget_warns.length = 0
-    for (let warning of newwarnings) {
-      if (this.cm_doc.lineInfo(warning['line'])) {
-        this.cm_doc.addLineClass(warning['line'], 'background', 'warning-class')
-        this.line_widget_warns.push(this.cm_doc.addLineWidget(
-          warning['line'],
-          this.newWarning(warning['text'])
-        ))
       }
     }
   },
@@ -141,12 +116,22 @@ export default {
         '</div>'
       )
     },
-    newWarning (text) {
-      return this.createElementFromHTML(
-        '<div class="warning-text">' +
-        text +
-        '</div>'
-      )
+    cmSetErrors () {
+      for (let error of this.errors) {
+        if (this.cm_doc.lineInfo(error['line'])) {
+          this.line_errors.push({
+            'handle': this.cm_doc.addLineClass(error['line'], 'background', 'error-class'),
+            'widget': this.cm_doc.addLineWidget(error['line'], this.newError(error['text']))
+          })
+        }
+      }
+    },
+    cmUnsetErrors () {
+      for (let error of this.line_errors) {
+        this.cm_doc.removeLineClass(error['handle'], 'background', 'error-class')
+        error['widget'].clear()
+      }
+      this.line_errors.splice(0, this.line_errors.length)
     },
     createElementFromHTML (htmlString) {
       var div = document.createElement('div')
